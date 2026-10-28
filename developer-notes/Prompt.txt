@@ -1,0 +1,59 @@
+## Layout:
+
+- Header
+- Menú lateral (ocultable)
+- contenido
+
+## Paleta de colores
+
+- Azul marino, blanco, grises claros
+
+## Arquitectura
+
+- Modelo Vista Controlador (MVC)
+- Programación Orientada a Objetos (POO)
+
+## Tecnologías
+
+- HTML, CSS, JavaScript, PHP y MySQL
+
+## Consideraciones
+
+- La aplicación tiene que hacerse lo más simple posible
+
+## Descripción del Proyecto
+
+- La aplicación es para la Clínica UGA, Valera, Venezuela. Es una aplicación administrativa para el registro de incidencias con los computadoras, impresoras, etc. Basicamente, un usuario registra un problema y el de tecnico de sistemas lo atiende y responde a la incidencia.
+
+## Módulos de la Aplicación
+
+
+1- Login:
+
+
+Hay que implementar el: ¿Olvidaste tu contraseña?
+
+
+2- Home:
+
+Como ahora hay diferentes roles, o sea Usuario, Tecnico y Administrador. Pues ahora el home trabajará es en base al tipo de usuario que sea.
+
+- Usuario: debe tener 3 opciones, Nueva incidencia, Mis incidencias (es el módulo de incidencias, pero aquí unicamente se ven las de ese usuario) y Notificaciones.
+
+- Administrador: Bandeja general, Mis asignados, reportes y métricas y gestión de usuarios.
+
+
+3 - Nueva Incidencia (aquí es de donde las hacemos):
+
+- Titulo, categoria (select), prioridad (input de tipo radio, para baja, media, alta y critica), descripcion (textarea) y adjuntar archivo(s).
+
+
+4 - Incidencias:
+
+- Botón de Nueva Incidencia (redirige a Nueva Incidencia)
+- Buscador (busca por el título de la incidencia)
+- Filtrar (4 filtros a la vez: Estado, Prioridad, Categoría, Fecha)
+- La tabla debe tener ID, Título, Estado, Prioridad y Fecha
+- Paginado (botón de Anterior y Siguiente), máximo 15 registros a la vez, y debe decir el total de registros, o sea: 1-15 de 67, 16 a 30 de 67, etc.
+
+
