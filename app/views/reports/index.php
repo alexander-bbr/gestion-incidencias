@@ -25,6 +25,7 @@ $exportParams = array_filter(
         <div><h2>Periodo del reporte</h2><p class="muted">Filtra las incidencias por fecha de creación. Deja una fecha vacía para no limitar ese extremo.</p></div>
     </div>
     <form method="get" action="<?= e(url('reports')) ?>" class="report-filter-form">
+        <input type="hidden" name="route" value="reports">
         <label>Fecha desde<input type="date" name="from" value="<?= e($dateFrom) ?>"></label>
         <label>Fecha hasta<input type="date" name="to" value="<?= e($dateTo) ?>"></label>
         <div class="filter-actions"><button class="button button-primary" type="submit">Aplicar</button><a class="button button-secondary" href="<?= e(url('reports')) ?>">Limpiar</a></div>

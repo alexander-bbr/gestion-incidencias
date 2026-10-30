@@ -1,5 +1,8 @@
 <section class="auth-card">
-    <div class="auth-brand"><span class="brand-mark">UGA</span><p>CONFIGURACIÓN INICIAL</p></div>
+    <div class="auth-brand">
+        <img src="<?= e(asset_url('public/assets/images/favicon.png')) ?>" alt="Logo de la Clínica" class="company-logo">
+        <p>CONFIGURACIÓN INICIAL</p>
+    </div>
     <h1>Crear administrador</h1>
     <p class="muted">Crea la primera cuenta administrativa. Esta pantalla se desactivará al guardarla.</p>
     <?php if (!empty($error)): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>

@@ -10,6 +10,6 @@
         </div>
         <label>Descripción<textarea name="descripcion" rows="6" required><?= e($values['descripcion'] ?? '') ?></textarea></label>
         <label>Adjuntar archivos<input type="file" name="attachments[]" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"><small>PDF, imágenes JPG/PNG, Word o Excel. Máximo 5 MB cada archivo.</small></label>
-        <div class="form-actions"><button class="button button-primary" type="submit">Guardar incidencia</button><a class="button button-secondary" href="<?= e(url('incidents')) ?>">Cancelar</a></div>
+        <div class="form-actions"><button class="button button-primary" type="submit">Guardar</button><a class="button button-secondary" href="<?= e(url('incidents')) ?>">Cancelar</a></div>
     </form>
 </section>

@@ -15,7 +15,10 @@ $signedInUser = current_user();
 <body class="<?= !empty($public) ? 'public-page' : '' ?>">
 <?php if (empty($public)): ?>
     <header class="topbar">
-        <a class="brand" href="<?= e(url('home')) ?>"><span class="brand-mark">UGA</span><span>Clínica UGA<small>Gestión de incidencias</small></span></a>
+        <a class="brand" href="<?= e(url('home')) ?>">
+            <img src="<?= e(asset_url('public/assets/images/favicon.png')) ?>" alt="Logo de la Clínica" class="company-logo">
+            <span>Clínica UGA<small>Gestión de Incidencias</small></span>
+        </a>
         <div class="topbar-user">
             <span><?= e($signedInUser['nombre'] . ' ' . $signedInUser['apellido']) ?></span>
             <form method="post" action="<?= e(url('logout')) ?>">
@@ -29,9 +32,6 @@ $signedInUser = current_user();
             <p class="nav-caption">MENÚ</p>
             <a class="nav-link" href="<?= e(url('home')) ?>">Inicio</a>
             <a class="nav-link" href="<?= e(url('incidents')) ?>">Incidencias</a>
-            <?php if (in_array($signedInUser['role'], ['USUARIO', 'ADMINISTRADOR'], true)): ?>
-                <a class="nav-link" href="<?= e(url('incident-create')) ?>">Nueva Incidencia</a>
-            <?php endif; ?>
             <?php if ($signedInUser['role'] === 'ADMINISTRADOR'): ?>
                 <a class="nav-link" href="<?= e(url('users')) ?>">Gestión de Usuarios</a>
                 <a class="nav-link" href="<?= e(url('reports')) ?>">Reportes y Métricas</a>

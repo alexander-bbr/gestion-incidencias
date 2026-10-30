@@ -1,5 +1,8 @@
 <section class="auth-card">
-    <div class="auth-brand"><span class="brand-mark">UGA</span><p>CLÍNICA UGA · VALERA</p></div>
+    <div class="auth-brand">
+        <img src="<?= e(asset_url('public/assets/images/favicon.png')) ?>" alt="Logo de la Clínica" class="company-logo">
+        <p>CLÍNICA UGA · VALERA</p>
+    </div>
     <h1>Bienvenido</h1>
     <p class="muted">Inicia sesión para gestionar tus incidencias.</p>
     <?php if (!empty($error)): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
