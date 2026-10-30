@@ -1,0 +1,1 @@
+<section class="panel empty-page"><h2>No encontramos esta página</h2><p class="muted">Puede que el recurso no exista o ya no esté disponible.</p><a class="button button-primary" href="<?= e(url(current_user() ? 'home' : 'login')) ?>">Volver</a></section>
