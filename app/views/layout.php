@@ -8,7 +8,9 @@ $signedInUser = current_user();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($pageTitle) ?></title>
-    <link rel="stylesheet" href="<?= e(asset_url('public/assets/app.css')) ?>">
+    <link rel="icon" href="<?= e(asset_url('public/favicon.ico')) ?>" sizes="any">
+    <link rel="stylesheet" href="<?= e(asset_url('public/assets/styles/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset_url('public/assets/styles/fonts.css')) ?>">
 </head>
 <body class="<?= !empty($public) ? 'public-page' : '' ?>">
 <?php if (empty($public)): ?>
@@ -28,11 +30,11 @@ $signedInUser = current_user();
             <a class="nav-link" href="<?= e(url('home')) ?>">Inicio</a>
             <a class="nav-link" href="<?= e(url('incidents')) ?>">Incidencias</a>
             <?php if (in_array($signedInUser['role'], ['USUARIO', 'ADMINISTRADOR'], true)): ?>
-                <a class="nav-link" href="<?= e(url('incident-create')) ?>">Nueva incidencia</a>
+                <a class="nav-link" href="<?= e(url('incident-create')) ?>">Nueva Incidencia</a>
             <?php endif; ?>
             <?php if ($signedInUser['role'] === 'ADMINISTRADOR'): ?>
-                <a class="nav-link" href="<?= e(url('users')) ?>">Gestión de usuarios</a>
-                <a class="nav-link" href="<?= e(url('reports')) ?>">Reportes y métricas</a>
+                <a class="nav-link" href="<?= e(url('users')) ?>">Gestión de Usuarios</a>
+                <a class="nav-link" href="<?= e(url('reports')) ?>">Reportes y Métricas</a>
             <?php endif; ?>
         </aside>
         <main class="main-content">

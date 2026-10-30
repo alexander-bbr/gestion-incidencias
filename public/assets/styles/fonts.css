@@ -1,0 +1,15 @@
+/* Tipografia Monserrat (400 y 700) */
+
+/* Tipografia regular (400) */
+@font-face {
+  font-family: Montserrat;
+  src: url("../fonts/Montserrat-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+/* Tipografia bold o negrita (700) */
+@font-face {
+  font-family: Montserrat;
+  src: url("../fonts/Montserrat-Bold.ttf") format("truetype");
+  font-weight: 700;
+}

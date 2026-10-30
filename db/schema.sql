@@ -2,7 +2,7 @@
 -- BASE DE DATOS: gestion_incidencias
 -- =====================================================
 CREATE DATABASE IF NOT EXISTS gestion_incidencias
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE gestion_incidencias;
 
 -- =====================================================
@@ -227,4 +227,4 @@ INSERT INTO categoria (nombre, descripcion) VALUES
 ('Otro',     'No clasificada');
 
 INSERT INTO departamento (nombre) VALUES
-('Sistemas'), ('Recursos Humanos'), ('Ventas'), ('Contabilidad');
+('Sistemas'), ('Admisión'), ('Administración'), ('Caja'), ('Contabilidad');

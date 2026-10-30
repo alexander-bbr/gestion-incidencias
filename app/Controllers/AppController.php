@@ -208,7 +208,7 @@ final class AppController
             $error = $this->validateIncident($values, $catalogs);
             if ($error !== null) {
                 render('incidents/form', [
-                    'title' => 'Nueva incidencia',
+                    'title' => 'Nueva Incidencia',
                     'values' => $values,
                     'catalogs' => $catalogs,
                     'error' => $error,
@@ -224,7 +224,7 @@ final class AppController
             } catch (DomainException $exception) {
                 $this->removeStoredFiles($movedFiles);
                 render('incidents/form', [
-                    'title' => 'Nueva incidencia',
+                    'title' => 'Nueva Incidencia',
                     'values' => $values,
                     'catalogs' => $catalogs,
                     'error' => $exception->getMessage(),
@@ -240,7 +240,7 @@ final class AppController
         }
 
         render('incidents/form', [
-            'title' => 'Nueva incidencia',
+            'title' => 'Nueva Incidencia',
             'values' => ['titulo' => '', 'descripcion' => '', 'id_categoria' => '', 'id_prioridad' => ''],
             'catalogs' => $catalogs,
             'editing' => false,
@@ -377,7 +377,7 @@ final class AppController
     private function userList(): void
     {
         require_role(User::ROLE_ADMIN);
-        render('users/index', ['title' => 'Gestión de usuarios', 'users' => $this->users->all()]);
+        render('users/index', ['title' => 'Gestión de Usuarios', 'users' => $this->users->all()]);
     }
 
     private function userEdit(): void
@@ -412,7 +412,7 @@ final class AppController
             }
             if ($error !== null) {
                 render('users/form', [
-                    'title' => $id === null ? 'Nuevo usuario' : 'Editar usuario',
+                    'title' => $id === null ? 'Nuevo Usuario' : 'Editar usuario',
                     'values' => $values,
                     'roles' => $this->users->roles(),
                     'departments' => $this->users->departments(),
@@ -427,7 +427,7 @@ final class AppController
                 if ($this->isDuplicateKey($exception)) {
                     $error = 'Ese correo ya está registrado.';
                     render('users/form', [
-                        'title' => $id === null ? 'Nuevo usuario' : 'Editar usuario',
+                        'title' => $id === null ? 'Nuevo Usuario' : 'Editar usuario',
                         'values' => $values,
                         'roles' => $this->users->roles(),
                         'departments' => $this->users->departments(),
@@ -445,7 +445,7 @@ final class AppController
             redirect('users');
         }
         render('users/form', [
-            'title' => $id === null ? 'Nuevo usuario' : 'Editar usuario',
+            'title' => $id === null ? 'Nuevo Usuario' : 'Editar usuario',
             'values' => $values,
             'roles' => $this->users->roles(),
             'departments' => $this->users->departments(),
@@ -471,22 +471,59 @@ final class AppController
     private function reports(): void
     {
         require_role(User::ROLE_ADMIN);
-        render('reports/index', ['title' => 'Reportes y métricas', 'data' => (new Report($this->db))->data()]);
+        [$dateFrom, $dateTo, $error] = $this->reportDateRange();
+        $reports = $error === null
+            ? (new Report($this->db))->data($dateFrom, $dateTo)
+            : ['statuses' => [], 'priorities' => [], 'categories' => [], 'resolution' => [], 'records' => []];
+        render('reports/index', [
+            'title' => 'Reportes y Métricas',
+            'reports' => $reports,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'error' => $error,
+            'chartsAvailable' => $error === null,
+        ]);
     }
 
     private function reportsExport(): void
     {
         require_role(User::ROLE_ADMIN);
+        [$dateFrom, $dateTo, $error] = $this->reportDateRange();
+        if ($error !== null) {
+            http_response_code(400);
+            exit($error);
+        }
         $report = new Report($this->db);
-        $path = $report->createExcelFile($report->data());
+        $path = $report->createExcelFile($report->data($dateFrom, $dateTo));
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="reporte-incidencias-' . date('Y-m-d') . '.xlsx"');
+        header('Content-Disposition: attachment; filename="registros-incidencias-' . date('Y-m-d') . '.xlsx"');
         header('Content-Length: ' . filesize($path));
         header('X-Content-Type-Options: nosniff');
         readfile($path);
         if (!unlink($path)) {
             error_log('No se pudo eliminar el archivo temporal de reporte ' . $path);
         }
+    }
+
+    private function reportDateRange(): array
+    {
+        $dateFrom = trim((string) ($_GET['from'] ?? ''));
+        $dateTo = trim((string) ($_GET['to'] ?? ''));
+        foreach (['Fecha desde' => $dateFrom, 'Fecha hasta' => $dateTo] as $label => $value) {
+            if ($value !== '' && !$this->isValidDate($value)) {
+                return [$dateFrom, $dateTo, $label . ' no es válida.'];
+            }
+        }
+        if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+            return [$dateFrom, $dateTo, 'La fecha desde no puede ser posterior a la fecha hasta.'];
+        }
+        return [$dateFrom !== '' ? $dateFrom : null, $dateTo !== '' ? $dateTo : null, null];
+    }
+
+    private function isValidDate(string $value): bool
+    {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $date !== false && $date->format('Y-m-d') === $value;
     }
 
     private function incidentValues(array $input): array

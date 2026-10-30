@@ -22,5 +22,7 @@ Aplicación administrativa para el registro y control de las incidencias relacio
   - Creación de Incidencias con prioridad, categoría y hasta 5 archivos adjuntos (5 MB por archivo).
 
 - Reportes y Métricas:
+  - Filtro por periodo de creación aplicado a las gráficas y a las descargas.
+  - Descarga de gráficas como PDF e incidencias filtradas como Excel.
 
 - Gestión de Usuarios:

@@ -4,7 +4,7 @@ $roleLabels = ['USUARIO' => 'Usuario', 'TECNICO' => 'Técnico', 'ADMINISTRADOR' 
 <section class="welcome-panel">
     <div><p class="eyebrow">PANEL DE CONTROL</p><h2>Hola, <?= e($user['nombre']) ?></h2><p>Resumen de tus incidencias como <?= e($roleLabels[$user['role']] ?? $user['role']) ?>.</p></div>
     <?php if (in_array($user['role'], ['USUARIO', 'ADMINISTRADOR'], true)): ?>
-        <a class="button button-primary" href="<?= e(url('incident-create')) ?>">＋ Nueva incidencia</a>
+        <a class="button button-primary" href="<?= e(url('incident-create')) ?>">＋ Nueva Incidencia</a>
     <?php endif; ?>
 </section>
 <div class="stat-grid">

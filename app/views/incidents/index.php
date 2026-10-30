@@ -1,6 +1,6 @@
 <section class="panel">
     <div class="panel-heading"><div><h2>Listado de incidencias</h2><p class="muted">Filtra y consulta los reportes disponibles para tu perfil.</p></div>
-        <?php if (in_array($user['role'], ['USUARIO', 'ADMINISTRADOR'], true)): ?><a class="button button-primary" href="<?= e(url('incident-create')) ?>">＋ Nueva incidencia</a><?php endif; ?>
+        <?php if (in_array($user['role'], ['USUARIO', 'ADMINISTRADOR'], true)): ?><a class="button button-primary" href="<?= e(url('incident-create')) ?>">＋ Nueva Incidencia</a><?php endif; ?>
     </div>
     <form method="get" class="filter-form">
         <input type="hidden" name="route" value="incidents">

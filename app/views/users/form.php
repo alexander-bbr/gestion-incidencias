@@ -9,6 +9,6 @@
         <label>Departamento<select name="id_departamento"><option value="">Sin departamento</option><?php foreach ($departments as $item): ?><option value="<?= (int) $item['id_departamento'] ?>" <?= (string) ($values['id_departamento'] ?? '') === (string) $item['id_departamento'] ? 'selected' : '' ?>><?= e($item['nombre']) ?></option><?php endforeach; ?></select></label></div>
         <label>Teléfono<input name="telefono" maxlength="20" value="<?= e($values['telefono'] ?? '') ?>"></label>
         <label><?= $editing ? 'Nueva contraseña (opcional)' : 'Contraseña' ?><input type="password" name="password" minlength="12" maxlength="72" autocomplete="new-password" <?= $editing ? '' : 'required' ?>><small>Mínimo 12 caracteres, máximo 72 bytes<?= $editing ? '; déjala vacía si no deseas cambiarla.' : '.' ?></small></label>
-        <div class="form-actions"><button class="button button-primary" type="submit"><?= $editing ? 'Guardar cambios' : 'Crear usuario' ?></button><a class="button button-secondary" href="<?= e(url('users')) ?>">Cancelar</a></div>
+        <div class="form-actions"><button class="button button-primary" type="submit"><?= $editing ? 'Guardar' : 'Crear' ?></button><a class="button button-secondary" href="<?= e(url('users')) ?>">Cancelar</a></div>
     </form>
 </section>
