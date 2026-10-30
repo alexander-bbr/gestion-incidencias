@@ -39,12 +39,6 @@ a {
 a:hover {
   text-decoration: underline;
 }
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
 .topbar {
   height: 72px;
   background: var(--main-color);
