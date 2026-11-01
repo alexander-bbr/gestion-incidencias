@@ -8,7 +8,7 @@
         <?php if (!empty($incident['solucion'])): ?><h3>Solución</h3><div class="prose"><?= nl2br(e($incident['solucion'])) ?></div><?php endif; ?>
         <h3>Archivos adjuntos</h3>
         <?php if (!$attachments): ?><p class="muted">No hay archivos adjuntos.</p><?php else: ?><ul class="attachment-list"><?php foreach ($attachments as $file): ?><li><a href="<?= e(url('attachment', ['id' => $file['id_adjunto']])) ?>"><?= e($file['nombre_archivo']) ?></a><small><?= number_format((int) $file['tamano_bytes'] / 1024, 0) ?> KB</small></li><?php endforeach; ?></ul><?php endif; ?>
-        <a class="button button-secondary" href="<?= e(url('incidents')) ?>">← Volver a incidencias</a>
+        <a class="button button-secondary button-go-back" href="<?= e(url('incidents')) ?>">← Volver a Incidencias</a>
     </section>
     <?php if ($canManage): ?>
         <section class="panel">

@@ -50,6 +50,21 @@ function csrf_field(): string
     return '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">';
 }
 
+function notification_message(array $notification): string
+{
+    if ($notification['status_from'] === null || $notification['status_to'] === null) {
+        return e($notification['mensaje']);
+    }
+
+    return e($notification['message_prefix'])
+        . '<span class="notification-status" style="--status-color:' . e($notification['status_from_color']) . '">'
+        . e($notification['status_from']) . '</span>'
+        . e($notification['message_between_statuses'])
+        . '<span class="notification-status" style="--status-color:' . e($notification['status_to_color']) . '">'
+        . e($notification['status_to']) . '</span>'
+        . e($notification['message_suffix']);
+}
+
 function flash(string $type, string $message): void
 {
     $_SESSION['_flash'][] = ['type' => $type, 'message' => $message];

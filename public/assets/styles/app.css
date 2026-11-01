@@ -202,6 +202,7 @@ a:hover {
   text-align: left;
   font: inherit;
   font-size: 12px;
+  border-left: 3px solid var(--notification-color, var(--line));
 }
 .notification-item:hover {
   background: #e7eef7;
@@ -209,6 +210,13 @@ a:hover {
 .notification-item small {
   color: var(--muted);
   font-size: 10px;
+}
+.notification-message {
+  display: block;
+}
+.notification-status {
+  color: var(--status-color, var(--ink));
+  font-weight: 700;
 }
 .notification-announcements {
   position: fixed;
@@ -228,19 +236,28 @@ a:hover {
   gap: 10px;
   margin: 0;
   padding: 11px 14px;
-  border: 2px solid rgba(30, 75, 181, 0.789);
+  border: 2px solid var(--notification-color, #315f91);
   border-radius: 8px;
-  background: #eaeefb;
+  background: #f4f6fc;
   pointer-events: auto;
 }
 .notification-announcement-icon {
-  color: var(--blue);
+  color: var(--notification-color, var(--blue));
   font-size: 13px;
 }
-.notification-announcement-message {
+.notification-announcement-content {
+  display: grid;
   flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+.notification-announcement-message {
   color: #344054;
   font-size: 12px;
+}
+.notification-announcement-date {
+  color: var(--muted);
+  font-size: 10px;
 }
 .app-shell {
   display: flex;
@@ -387,8 +404,8 @@ small {
 .button {
   display: inline-flex;
   min-height: 38px;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   border: 1px solid transparent;
   border-radius: 7px;
   padding: 8px 13px;
@@ -411,6 +428,12 @@ small {
   color: #344054;
   border-color: #d0d5dd;
 }
+.button-go-back {
+  display: block;
+  margin: auto;
+  margin-top: 2rem;
+  width: fit-content;
+}
 .button-quiet {
   color: #e0e8f1;
   background: transparent;
@@ -430,6 +453,12 @@ small {
   width: 100%;
   overflow-x: auto;
 }
+table,
+th,
+td,
+tr {
+  border: 1px solid rgba(178, 178, 178, 0.875);
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -437,10 +466,11 @@ table {
   font-size: 13px;
 }
 th {
+  text-align: center;
   padding: 11px 12px;
   background: #f8fafc;
-  color: #667085;
-  font-size: 11px;
+  color: var(--text-color);
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -448,11 +478,10 @@ th {
 }
 td {
   padding: 13px 12px;
-  border-bottom: 1px solid #eef1f5;
   vertical-align: middle;
 }
-tr:last-child td {
-  border-bottom: 0;
+td:last-of-type {
+  text-align: center;
 }
 .table-title {
   color: var(--secondary-text-color);
@@ -626,6 +655,7 @@ textarea {
 }
 .form-actions {
   display: flex;
+  justify-content: center;
   gap: 9px;
   padding-top: 4px;
 }
@@ -869,6 +899,9 @@ legend {
   .topbar-user > span {
     display: none;
   }
+  .notification-bell-label {
+    display: none;
+  }
   .app-shell {
     display: block;
   }
@@ -946,6 +979,9 @@ legend {
   .notification-announcement-message {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+  .notification-announcement-date {
+    white-space: nowrap;
   }
 }
 @media print {

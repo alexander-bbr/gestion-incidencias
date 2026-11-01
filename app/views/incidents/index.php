@@ -13,11 +13,12 @@
         <div class="filter-actions"><button class="button button-primary" type="submit">Filtrar</button><a class="button button-secondary" href="<?= e(url('incidents')) ?>">Limpiar</a></div>
     </form>
     <?php if (!$result['items']): ?><div class="empty-state">No hay incidencias que coincidan con los filtros.</div><?php else: ?>
-        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Título</th><?php if ($user['role'] === 'ADMINISTRADOR'): ?><th>Reportante</th><?php endif; ?><th>Estado</th><th>Prioridad</th><th>Fecha</th><th>Acción</th></tr></thead><tbody>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Título</th><?php if ($user['role'] === 'ADMINISTRADOR'): ?><th>Reportante</th><?php endif; ?><th>Técnico</th><th>Estado</th><th>Prioridad</th><th>Fecha</th><th>Acción</th></tr></thead><tbody>
         <?php foreach ($result['items'] as $item): ?><tr>
             <td class="mono"><?= e($item['codigo']) ?></td>
             <td><a class="table-title" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>"><?= e($item['titulo']) ?></a><small class="table-subtitle"><?= e($item['category']) ?></small></td>
             <?php if ($user['role'] === 'ADMINISTRADOR'): ?><td><?= e($item['reporter']) ?></td><?php endif; ?>
+            <td><?= e($item['technician'] ?: 'Sin asignar') ?></td>
             <td><span class="badge" style="--badge-color:<?= e($item['status_color']) ?>"><?= e(str_replace('_', ' ', $item['status'])) ?></span></td>
             <td><span class="priority-dot" style="--priority-color:<?= e($item['priority_color']) ?>"></span><?= e($item['priority']) ?></td>
             <td><?= e(date('d/m/Y', strtotime($item['fecha_creacion']))) ?></td>

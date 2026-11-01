@@ -13,7 +13,7 @@
             <label>Apellido<input name="apellido" maxlength="100" value="<?= e($values['apellido'] ?? '') ?>" required></label>
         </div>
         <label>Correo electrónico<input type="email" name="email" maxlength="150" value="<?= e($values['email'] ?? '') ?>" required></label>
-        <label>Contraseña segura<input type="password" name="password" minlength="12" maxlength="72" autocomplete="new-password" required><small>Mínimo 12 caracteres, máximo 72 bytes.</small></label>
+        <label>Contraseña segura<input type="password" name="password" minlength="12" maxlength="72" autocomplete="new-password" required><small>Mínimo 12 caracteres</small></label>
         <button class="button button-primary button-wide" type="submit">Crear cuenta de administrador</button>
     </form>
 </section>

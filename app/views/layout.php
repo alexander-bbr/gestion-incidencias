@@ -44,7 +44,7 @@ $signedInUser = current_user();
                                     <form method="post" action="<?= e(url('notification-open', ['id' => $notification['id_notificacion']])) ?>">
                                         <?= csrf_field() ?>
                                         <button class="notification-item" type="submit">
-                                            <span><?= e($notification['mensaje']) ?></span>
+                                            <span class="notification-message" style="--notification-color:<?= e($notification['accent_color']) ?>"><?= notification_message($notification) ?></span>
                                             <small><?= e(date('d/m/Y H:i', strtotime($notification['fecha']))) ?></small>
                                         </button>
                                     </form>
@@ -84,8 +84,11 @@ $signedInUser = current_user();
             <?php foreach ($visibleNotifications as $notification): ?>
                 <form method="post" action="<?= e(url('notification-open', ['id' => $notification['id_notificacion']])) ?>" class="notification-announcement">
                     <?= csrf_field() ?>
-                    <span class="notification-announcement-icon" aria-hidden="true">●</span>
-                    <span class="notification-announcement-message"><?= e($notification['mensaje']) ?></span>
+                    <span class="notification-announcement-icon" style="--notification-color:<?= e($notification['accent_color']) ?>" aria-hidden="true">●</span>
+                    <span class="notification-announcement-content">
+                        <span class="notification-announcement-message"><?= notification_message($notification) ?></span>
+                        <small class="notification-announcement-date"><?= e(date('d/m/Y H:i', strtotime($notification['fecha']))) ?></small>
+                    </span>
                     <button type="submit">Ver incidencia</button>
                 </form>
             <?php endforeach; ?>

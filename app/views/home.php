@@ -16,12 +16,38 @@ $roleLabels = ['USUARIO' => 'Usuario', 'TECNICO' => 'Técnico', 'ADMINISTRADOR' 
 <section class="panel">
     <div class="panel-heading"><div><h2>Incidencias recientes</h2><p class="muted">Acceso rápido a los últimos reportes visibles.</p></div><a class="text-link" href="<?= e(url('incidents')) ?>">Ver todas →</a></div>
     <?php if (!$recent): ?><div class="empty-state">Todavía no hay incidencias para mostrar.</div><?php else: ?>
-        <div class="table-wrap"><table><thead><tr><th>Código / título</th><th>Estado</th><th>Prioridad</th><th>Fecha</th><th></th></tr></thead><tbody>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código / título</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Fecha</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
         <?php foreach ($recent as $item): ?><tr>
-            <td><a class="table-title" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>"><?= e($item['codigo']) ?> · <?= e($item['titulo']) ?></a></td>
-            <td><span class="badge" style="--badge-color:<?= e($item['status_color']) ?>"><?= e(str_replace('_', ' ', $item['status'])) ?></span></td>
-            <td><?= e($item['priority']) ?></td><td><?= e(date('d/m/Y', strtotime($item['fecha_creacion']))) ?></td>
-            <td><a class="text-link" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>">Abrir</a></td>
+            <td>
+                <a class="table-title" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>">
+                    <?= e($item['codigo']) ?> · <?= e($item['titulo']) ?>
+                </a>
+            </td>
+            <td>
+                <span class="badge" style="--badge-color:<?= e($item['status_color']) ?>">
+                    <?= e(str_replace('_', ' ', $item['status'])) ?>
+                </span>
+            </td>
+            <td>
+                <?= e($item['priority']) ?>
+            </td>
+            <td>
+                <?= e(date('d/m/Y', strtotime($item['fecha_creacion']))) ?>
+            </td>
+            <td>
+                <a class="text-link" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>">Abrir</a>
+            </td>
         </tr><?php endforeach; ?>
         </tbody></table></div>
     <?php endif; ?>
