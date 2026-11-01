@@ -3,7 +3,7 @@
         <div class="panel-heading"><div><p class="eyebrow"><?= e($incident['codigo']) ?></p><h2><?= e($incident['titulo']) ?></h2><p class="muted">Registrada el <?= e(date('d/m/Y H:i', strtotime($incident['fecha_creacion']))) ?> por <?= e($incident['reporter']) ?></p></div>
             <span class="badge" style="--badge-color:<?= e($incident['status'] === 'ABIERTA' ? '#3498DB' : ($incident['status'] === 'RESUELTA' ? '#2ECC71' : '#F1C40F')) ?>"><?= e(str_replace('_', ' ', $incident['status'])) ?></span></div>
         <div class="detail-facts"><span><small>Categoría</small><?= e($incident['category']) ?></span><span><small>Prioridad</small><?= e($incident['priority']) ?></span><span><small>Técnico asignado</small><?= e($incident['technician'] ?? 'Sin asignar') ?></span></div>
-        <?php if ($reporterCanEdit): ?><p class="form-actions"><a class="button button-primary" href="<?= e(url('incident-edit', ['id' => $incident['id_incidencia']])) ?>">Editar mi incidencia</a></p><?php endif; ?>
+        <?php if ($reporterCanEdit): ?><p class="form-actions"><a class="button button-primary button-edit" href="<?= e(url('incident-edit', ['id' => $incident['id_incidencia']])) ?>">Editar</a></p><?php endif; ?>
         <h3>Descripción</h3><div class="prose"><?= nl2br(e($incident['descripcion'])) ?></div>
         <?php if (!empty($incident['solucion'])): ?><h3>Solución</h3><div class="prose"><?= nl2br(e($incident['solucion'])) ?></div><?php endif; ?>
         <h3>Archivos adjuntos</h3>

@@ -423,6 +423,9 @@ small {
   background: var(--main-color);
   color: #fff;
 }
+.button-edit {
+  margin: 0.8rem auto 1rem;
+}
 .button-secondary {
   background: #fff;
   color: #344054;
