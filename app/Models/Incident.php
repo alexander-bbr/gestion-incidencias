@@ -126,7 +126,8 @@ final class Incident
                  VALUES (:codigo, :titulo, :descripcion, :category, :priority, :status,
                          :reporter, :technician, :assignment_date, DATE_ADD(NOW(), INTERVAL :hours HOUR))'
             );
-            $insert->bindValue(':codigo', 'INC-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4))));
+            $code = 'INC-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
+            $insert->bindValue(':codigo', $code);
             $insert->bindValue(':titulo', $values['titulo']);
             $insert->bindValue(':descripcion', $values['descripcion']);
             $insert->bindValue(':category', $values['id_categoria'], PDO::PARAM_INT);
@@ -145,6 +146,7 @@ final class Incident
             $this->history($id, $userId, 'CREACION', null, 'ABIERTA');
             if ($values['id_tecnico']) {
                 $this->history($id, $userId, 'ASIGNACION', null, (string) $values['id_tecnico']);
+                $this->notifyTechnician((int) $values['id_tecnico'], $id, $code, $values['titulo']);
             }
             $this->db->commit();
             return $id;
@@ -161,15 +163,16 @@ final class Incident
         $this->db->beginTransaction();
         try {
             $current = $this->db->prepare(
-                'SELECT id_tecnico FROM incidencia
+                'SELECT id_tecnico, codigo, titulo FROM incidencia
                  WHERE id_incidencia = :id AND id_reportante = :reporter FOR UPDATE'
             );
             $current->execute(['id' => $id, 'reporter' => $reporterId]);
-            $oldTechnician = $current->fetchColumn();
-            if ($oldTechnician === false) {
+            $incident = $current->fetch();
+            if (!$incident) {
                 $this->db->rollBack();
                 return false;
             }
+            $oldTechnician = $incident['id_tecnico'];
 
             $technicianId = $values['id_tecnico'] !== '' ? (int) $values['id_tecnico'] : null;
             $update = $this->db->prepare(
@@ -206,6 +209,14 @@ final class Incident
                     $oldTechnician !== null ? (string) $oldTechnician : null,
                     $technicianId !== null ? (string) $technicianId : null
                 );
+                if ($technicianId !== null) {
+                    $this->notifyTechnician(
+                        $technicianId,
+                        $id,
+                        $incident['codigo'],
+                        $values['titulo'] !== $incident['titulo'] ? $values['titulo'] : $incident['titulo']
+                    );
+                }
             }
             $this->history($id, $reporterId, 'EDICION_REPORTANTE', null, 'Datos de incidencia actualizados');
             $this->db->commit();
@@ -256,10 +267,26 @@ final class Incident
             ]);
             if ($old['status'] !== $values['status_name']) {
                 $this->history($id, $actorId, 'CAMBIO_ESTADO', $old['status'], $values['status_name']);
+                $this->notifyStatusChange(
+                    (int) $old['id_reportante'],
+                    $id,
+                    $old['codigo'],
+                    $values['titulo'],
+                    $old['status'],
+                    $values['status_name']
+                );
             }
             if ((int) $old['id_tecnico'] !== (int) ($values['id_tecnico'] ?: 0)) {
                 $this->history($id, $actorId, 'ASIGNACION', $old['id_tecnico'] ? (string) $old['id_tecnico'] : null,
                     $values['id_tecnico'] ?: null);
+                if ($values['id_tecnico'] !== '') {
+                    $this->notifyTechnician(
+                        (int) $values['id_tecnico'],
+                        $id,
+                        $old['codigo'],
+                        $values['titulo']
+                    );
+                }
             }
             $this->db->commit();
         } catch (\Throwable $exception) {
@@ -275,15 +302,17 @@ final class Incident
         $this->db->beginTransaction();
         try {
             $existing = $this->db->prepare(
-                'SELECT s.nombre FROM incidencia i JOIN estado s ON s.id_estado = i.id_estado
+                'SELECT s.nombre, i.id_reportante, i.codigo, i.titulo
+                 FROM incidencia i JOIN estado s ON s.id_estado = i.id_estado
                  WHERE i.id_incidencia = :id AND i.id_tecnico = :technician'
             );
             $existing->execute(['id' => $id, 'technician' => $technicianId]);
-            $oldStatus = $existing->fetchColumn();
-            if ($oldStatus === false) {
+            $incident = $existing->fetch();
+            if (!$incident) {
                 $this->db->rollBack();
                 return false;
             }
+            $oldStatus = $incident['nombre'];
             $statement = $this->db->prepare(
                 'UPDATE incidencia SET id_estado = :status, solucion = :solution,
                  fecha_resolucion = CASE WHEN :resolved_set = 1 AND fecha_resolucion IS NULL
@@ -299,6 +328,14 @@ final class Incident
             ]);
             if ($oldStatus !== $statusName) {
                 $this->history($id, $technicianId, 'CAMBIO_ESTADO', $oldStatus, $statusName);
+                $this->notifyStatusChange(
+                    (int) $incident['id_reportante'],
+                    $id,
+                    $incident['codigo'],
+                    $incident['titulo'],
+                    $oldStatus,
+                    $statusName
+                );
             }
             $this->db->commit();
             return true;
@@ -414,6 +451,53 @@ final class Incident
             'action' => $action,
             'before' => $before,
             'after' => $after,
+        ]);
+    }
+
+    private function notifyTechnician(int $technicianId, int $incidentId, string $code, string $title): void
+    {
+        $this->insertNotification(
+            $technicianId,
+            $incidentId,
+            'Te asignaron la incidencia ' . $code . ': ' . $title . '.'
+        );
+    }
+
+    private function notifyStatusChange(
+        int $reporterId,
+        int $incidentId,
+        string $code,
+        string $title,
+        string $oldStatus,
+        string $newStatus
+    ): void {
+        $recipients = [$reporterId];
+        $administrators = $this->db->query(
+            "SELECT u.id_usuario FROM usuario u
+             JOIN rol r ON r.id_rol = u.id_rol
+             WHERE r.nombre = 'ADMINISTRADOR' AND u.activo = 1"
+        )->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($administrators as $administratorId) {
+            $recipients[] = (int) $administratorId;
+        }
+
+        $message = 'El estado de la incidencia ' . $code . ' (' . $title . ') cambió de '
+            . str_replace('_', ' ', $oldStatus) . ' a ' . str_replace('_', ' ', $newStatus) . '.';
+        foreach (array_unique($recipients) as $recipientId) {
+            $this->insertNotification((int) $recipientId, $incidentId, $message);
+        }
+    }
+
+    private function insertNotification(int $userId, int $incidentId, string $message): void
+    {
+        $statement = $this->db->prepare(
+            'INSERT INTO notificacion (id_usuario, id_incidencia, mensaje)
+             VALUES (:user, :incident, :message)'
+        );
+        $statement->execute([
+            'user' => $userId,
+            'incident' => $incidentId,
+            'message' => mb_substr($message, 0, 500),
         ]);
     }
 }

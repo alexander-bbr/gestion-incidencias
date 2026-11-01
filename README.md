@@ -16,6 +16,9 @@ Aplicación administrativa para el registro y control de las incidencias relacio
 
 - Inicio de sesión:
   - Inicio de sesión con correo y contraseña, además de un sistema de restablecimiento de contraseñas por parte del usuario `Administrador`.
+- Notificaciones:
+  - Campana en el encabezado con contador de notificaciones pendientes, listado reciente y opción para marcar todas como leídas.
+  - Avisos visibles en pantalla al asignar incidencias a técnicos o cambiar el estado; cada aviso permite abrir la incidencia.
 
 - Incidencias:
   - Listado de incidencias con buscador, filtros combinables y paginación de 15 elementos.

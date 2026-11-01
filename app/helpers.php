@@ -96,11 +96,27 @@ function require_role(string ...$roles): array
 
 function render(string $view, array $data = []): void
 {
-    extract($data, EXTR_SKIP);
     $viewPath = ROOT_PATH . '/app/views/' . $view . '.php';
     if (!is_file($viewPath)) {
         throw new RuntimeException('No existe la vista solicitada.');
     }
+    $data['notifications'] = [];
+    $data['unreadNotificationCount'] = 0;
+    $data['visibleNotifications'] = [];
+    if (empty($data['public']) && current_user() !== null) {
+        $notificationModel = new \App\Models\Notification(\App\Models\Database::connection());
+        $data['notifications'] = $notificationModel->recentForUser((int) current_user()['id_usuario']);
+        $data['unreadNotificationCount'] = $notificationModel->unreadCount((int) current_user()['id_usuario']);
+        $data['visibleNotifications'] = array_slice(
+            array_values(array_filter(
+                $data['notifications'],
+                static fn(array $notification): bool => !(bool) $notification['leida']
+            )),
+            0,
+            3
+        );
+    }
+    extract($data, EXTR_SKIP);
     require ROOT_PATH . '/app/views/layout.php';
 }
 

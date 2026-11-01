@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\Database;
 use App\Models\Incident;
+use App\Models\Notification;
 use App\Models\Report;
 use App\Models\User;
 use DomainException;
@@ -83,6 +84,12 @@ final class AppController
                 break;
             case 'reports-export':
                 $this->reportsExport();
+                break;
+            case 'notification-open':
+                $this->notificationOpen();
+                break;
+            case 'notification-read-all':
+                $this->notificationReadAll();
                 break;
             default:
                 http_response_code(404);
@@ -546,6 +553,7 @@ final class AppController
             http_response_code(400);
             exit($error);
         }
+
         $report = new Report($this->db);
         $path = $report->createExcelFile($report->data($dateFrom, $dateTo));
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -556,6 +564,43 @@ final class AppController
         if (!unlink($path)) {
             error_log('No se pudo eliminar el archivo temporal de reporte ' . $path);
         }
+    }
+
+    private function notificationOpen(): void
+    {
+        $user = require_login();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        verify_csrf();
+        $notificationId = $this->routeId();
+        $incidentId = (new Notification($this->db))->markRead(
+            $notificationId,
+            (int) $user['id_usuario']
+        );
+        if ($incidentId === null) {
+            flash('error', 'La notificación no está disponible.');
+            redirect('home');
+        }
+
+        $incident = $this->incidents->find($incidentId);
+        if ($incident !== null && $this->canViewIncident($user, $incident)) {
+            redirect('incident-view', ['id' => $incidentId]);
+        }
+        redirect('incidents');
+    }
+
+    private function notificationReadAll(): void
+    {
+        $user = require_login();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        verify_csrf();
+        (new Notification($this->db))->markAllRead((int) $user['id_usuario']);
+        redirect('home');
     }
 
     private function reportDateRange(): array
