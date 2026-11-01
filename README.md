@@ -18,11 +18,33 @@ Aplicación administrativa para el registro y control de las incidencias relacio
   - Inicio de sesión con correo y contraseña, además de un sistema de restablecimiento de contraseñas por parte del usuario `Administrador`.
 
 - Incidencias:
-  - Listado de incidencias con filtros combinables, fechas inclusivas y paginación de 15 elementos
-  - Creación de Incidencias con prioridad, categoría y hasta 5 archivos adjuntos (5 MB por archivo).
+  - Listado de incidencias con buscador, filtros combinables y paginación de 15 elementos.
+  - Creación de Incidencias con posibilidad de adjuntar hasta 5 archivos (5 MB por archivo).
 
 - Reportes y Métricas:
-  - Filtro por periodo de creación aplicado a las gráficas y a las descargas.
-  - Descarga de gráficas como PDF e incidencias filtradas como Excel.
+  - Filtro por periodo de creación.
+  - Gráficos para el rendimiento según estado (torta), prioridad (torta), top categorías (barras) y tiempo promediode resolución.
+  - Posibilidad de descarga de los gráficos en formato PDF, y de los registros en formato Excel.
 
 - Gestión de Usuarios:
+
+## Permisología
+
+### Módulo de Incidencias
+
+- Administrador:
+  - Puede ver y gestionar todas las incidencias
+
+- Técnico:
+  - Puede ver y gestionar las incidencias que tenga asignado
+
+- Usuario:
+  - Puede ver y gestionar sus propias incidencias
+
+### Módulo de Reportes e Incidencias
+
+Solo disponible para el usuario `Administrador`.
+
+### Módulo de Gestión de Usuarios
+
+Solo disponible para el usuario `Administrador`.

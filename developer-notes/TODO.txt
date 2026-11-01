@@ -1,5 +1,0 @@
-# TODO
-
-- Hacer el Home del Usuario Administrador.
-- Hacer el submódulo de exportación de PDF y Excel en el módulode Reportes y Métricas.
-- Especificar mejor sobre los filtros en el módulo de Incidencias
