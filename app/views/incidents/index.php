@@ -22,6 +22,7 @@
             <td><span class="priority-dot" style="--priority-color:<?= e($item['priority_color']) ?>"></span><?= e($item['priority']) ?></td>
             <td><?= e(date('d/m/Y', strtotime($item['fecha_creacion']))) ?></td>
             <td class="actions"><a class="text-link" href="<?= e(url('incident-view', ['id' => $item['id_incidencia']])) ?>">Ver</a>
+                <?php if ($user['role'] === 'USUARIO' && (int) $item['id_reportante'] === (int) $user['id_usuario']): ?><a class="text-link" href="<?= e(url('incident-edit', ['id' => $item['id_incidencia']])) ?>">Editar</a><?php endif; ?>
                 <?php if ($user['role'] === 'ADMINISTRADOR'): ?><form method="post" action="<?= e(url('incident-delete', ['id' => $item['id_incidencia']])) ?>" onsubmit="return confirm('¿Eliminar esta incidencia? Esta acción no se puede deshacer.');"><?= csrf_field() ?><button class="link-danger" type="submit">Eliminar</button></form><?php endif; ?>
             </td>
         </tr><?php endforeach; ?></tbody></table></div>

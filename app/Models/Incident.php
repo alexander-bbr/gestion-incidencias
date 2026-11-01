@@ -122,9 +122,9 @@ final class Incident
             $insert = $this->db->prepare(
                 'INSERT INTO incidencia
                  (codigo, titulo, descripcion, id_categoria, id_prioridad, id_estado,
-                  id_reportante, fecha_limite_sla)
+                  id_reportante, id_tecnico, fecha_asignacion, fecha_limite_sla)
                  VALUES (:codigo, :titulo, :descripcion, :category, :priority, :status,
-                         :reporter, DATE_ADD(NOW(), INTERVAL :hours HOUR))'
+                         :reporter, :technician, :assignment_date, DATE_ADD(NOW(), INTERVAL :hours HOUR))'
             );
             $insert->bindValue(':codigo', 'INC-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4))));
             $insert->bindValue(':titulo', $values['titulo']);
@@ -133,6 +133,8 @@ final class Incident
             $insert->bindValue(':priority', $values['id_prioridad'], PDO::PARAM_INT);
             $insert->bindValue(':status', $this->statusId('ABIERTA'), PDO::PARAM_INT);
             $insert->bindValue(':reporter', $userId, PDO::PARAM_INT);
+            $insert->bindValue(':technician', $values['id_tecnico'] ?: null, $values['id_tecnico'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $insert->bindValue(':assignment_date', $values['id_tecnico'] ? date('Y-m-d H:i:s') : null, $values['id_tecnico'] ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $insert->bindValue(':hours', (int) $hours, PDO::PARAM_INT);
             $insert->execute();
             $id = (int) $this->db->lastInsertId();
@@ -141,8 +143,73 @@ final class Incident
                 $this->insertAttachment($id, $userId, $attachment);
             }
             $this->history($id, $userId, 'CREACION', null, 'ABIERTA');
+            if ($values['id_tecnico']) {
+                $this->history($id, $userId, 'ASIGNACION', null, (string) $values['id_tecnico']);
+            }
             $this->db->commit();
             return $id;
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    public function updateForReporter(int $id, int $reporterId, array $values): bool
+    {
+        $this->db->beginTransaction();
+        try {
+            $current = $this->db->prepare(
+                'SELECT id_tecnico FROM incidencia
+                 WHERE id_incidencia = :id AND id_reportante = :reporter FOR UPDATE'
+            );
+            $current->execute(['id' => $id, 'reporter' => $reporterId]);
+            $oldTechnician = $current->fetchColumn();
+            if ($oldTechnician === false) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            $technicianId = $values['id_tecnico'] !== '' ? (int) $values['id_tecnico'] : null;
+            $update = $this->db->prepare(
+                'UPDATE incidencia
+                 SET titulo = :title, descripcion = :description,
+                     id_categoria = :category, id_prioridad = :priority,
+                     id_tecnico = :technician,
+                     fecha_asignacion = CASE
+                         WHEN :assignment_removed = 1 THEN NULL
+                         WHEN :assignment_changed = 1 AND :has_technician = 1 THEN NOW()
+                         ELSE fecha_asignacion
+                     END
+                 WHERE id_incidencia = :id AND id_reportante = :reporter'
+            );
+            $update->execute([
+                'title' => $values['titulo'],
+                'description' => $values['descripcion'],
+                'category' => $values['id_categoria'],
+                'priority' => $values['id_prioridad'],
+                'technician' => $technicianId,
+                'assignment_removed' => (int) $oldTechnician !== (int) ($technicianId ?? 0)
+                    && $technicianId === null ? 1 : 0,
+                'assignment_changed' => (int) $oldTechnician !== (int) ($technicianId ?? 0) ? 1 : 0,
+                'has_technician' => $technicianId !== null ? 1 : 0,
+                'id' => $id,
+                'reporter' => $reporterId,
+            ]);
+
+            if ((int) $oldTechnician !== (int) ($technicianId ?? 0)) {
+                $this->history(
+                    $id,
+                    $reporterId,
+                    'ASIGNACION',
+                    $oldTechnician !== null ? (string) $oldTechnician : null,
+                    $technicianId !== null ? (string) $technicianId : null
+                );
+            }
+            $this->history($id, $reporterId, 'EDICION_REPORTANTE', null, 'Datos de incidencia actualizados');
+            $this->db->commit();
+            return true;
         } catch (\Throwable $exception) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();

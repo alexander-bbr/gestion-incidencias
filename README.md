@@ -39,7 +39,7 @@ Aplicación administrativa para el registro y control de las incidencias relacio
   - Puede ver y gestionar las incidencias que tenga asignado
 
 - Usuario:
-  - Puede ver y gestionar sus propias incidencias
+  - Puede ver, editar y asignar un técnico a sus propias incidencias
 
 ### Módulo de Reportes e Incidencias
 

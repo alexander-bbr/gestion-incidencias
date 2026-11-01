@@ -205,12 +205,17 @@ final class AppController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             verify_csrf();
             $values = $this->incidentValues($_POST);
+            $values['id_tecnico'] = (string) ($_POST['id_tecnico'] ?? '');
             $error = $this->validateIncident($values, $catalogs);
+            if ($error === null && !$this->validTechnician($values['id_tecnico'])) {
+                $error = 'Selecciona un técnico válido.';
+            }
             if ($error !== null) {
                 render('incidents/form', [
                     'title' => 'Nueva Incidencia',
                     'values' => $values,
                     'catalogs' => $catalogs,
+                    'technicians' => $this->users->technicians(),
                     'error' => $error,
                     'editing' => false,
                 ]);
@@ -227,6 +232,7 @@ final class AppController
                     'title' => 'Nueva Incidencia',
                     'values' => $values,
                     'catalogs' => $catalogs,
+                    'technicians' => $this->users->technicians(),
                     'error' => $exception->getMessage(),
                     'editing' => false,
                 ]);
@@ -241,8 +247,9 @@ final class AppController
 
         render('incidents/form', [
             'title' => 'Nueva Incidencia',
-            'values' => ['titulo' => '', 'descripcion' => '', 'id_categoria' => '', 'id_prioridad' => ''],
+            'values' => ['titulo' => '', 'descripcion' => '', 'id_categoria' => '', 'id_prioridad' => '', 'id_tecnico' => ''],
             'catalogs' => $catalogs,
+            'technicians' => $this->users->technicians(),
             'editing' => false,
         ]);
     }
@@ -265,9 +272,13 @@ final class AppController
             'incident' => $incident,
             'attachments' => $this->incidents->attachments($id),
             'catalogs' => $this->incidents->catalogs(),
-            'technicians' => is_admin() ? $this->users->technicians() : [],
+            'technicians' => in_array($user['role'], [User::ROLE_USER, User::ROLE_ADMIN], true)
+                ? $this->users->technicians()
+                : [],
             'canManage' => is_admin(),
             'technicianCanUpdate' => $technicianCanUpdate,
+            'reporterCanEdit' => $user['role'] === User::ROLE_USER
+                && (int) $incident['id_reportante'] === (int) $user['id_usuario'],
         ]);
     }
 
@@ -279,6 +290,48 @@ final class AppController
         if (!$incident || !$this->canViewIncident($user, $incident)) {
             http_response_code(404);
             render('not-found', ['title' => 'Incidencia no encontrada']);
+            return;
+        }
+
+        if ($user['role'] === User::ROLE_USER) {
+            $catalogs = $this->incidents->catalogs();
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                verify_csrf();
+                $values = $this->incidentValues($_POST);
+                $values['id_tecnico'] = (string) ($_POST['id_tecnico'] ?? '');
+                $error = $this->validateIncident($values, $catalogs);
+                if ($error === null && !$this->validTechnician($values['id_tecnico'])) {
+                    $error = 'Selecciona un técnico válido.';
+                }
+                if ($error !== null) {
+                    render('incidents/form', [
+                        'title' => 'Editar incidencia',
+                        'values' => array_merge($incident, $values),
+                        'catalogs' => $catalogs,
+                        'technicians' => $this->users->technicians(),
+                        'error' => $error,
+                        'editing' => true,
+                        'incidentId' => $id,
+                    ]);
+                    return;
+                }
+                if (!$this->incidents->updateForReporter($id, (int) $user['id_usuario'], $values)) {
+                    http_response_code(404);
+                    render('not-found', ['title' => 'Incidencia no encontrada']);
+                    return;
+                }
+                flash('success', 'Tu incidencia fue actualizada.');
+                redirect('incident-view', ['id' => $id]);
+            }
+
+            render('incidents/form', [
+                'title' => 'Editar incidencia',
+                'values' => $incident,
+                'catalogs' => $catalogs,
+                'technicians' => $this->users->technicians(),
+                'editing' => true,
+                'incidentId' => $id,
+            ]);
             return;
         }
 
@@ -533,7 +586,20 @@ final class AppController
             'descripcion' => trim((string) ($input['descripcion'] ?? '')),
             'id_categoria' => (string) ($input['id_categoria'] ?? ''),
             'id_prioridad' => (string) ($input['id_prioridad'] ?? ''),
+            'id_tecnico' => (string) ($input['id_tecnico'] ?? ''),
         ];
+    }
+
+    private function validTechnician(string $technicianId): bool
+    {
+        if ($technicianId === '') {
+            return true;
+        }
+        if (!ctype_digit($technicianId)) {
+            return false;
+        }
+        $technicianIds = array_map('intval', array_column($this->users->technicians(), 'id_usuario'));
+        return in_array((int) $technicianId, $technicianIds, true);
     }
 
     private function validateIncident(array $values, array $catalogs): ?string
