@@ -211,9 +211,16 @@ a:hover {
   font-size: 10px;
 }
 .notification-announcements {
+  position: fixed;
+  z-index: 1000;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  width: min(390px, calc(100vw - 32px));
   display: grid;
   gap: 8px;
-  margin-bottom: 16px;
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  pointer-events: none;
 }
 .notification-announcement {
   display: flex;
@@ -221,9 +228,10 @@ a:hover {
   gap: 10px;
   margin: 0;
   padding: 11px 14px;
-  border: 1px solid #c9daec;
+  border: 2px solid rgba(30, 75, 181, 0.789);
   border-radius: 8px;
-  background: #f0f5fb;
+  background: #eaeefb;
+  pointer-events: auto;
 }
 .notification-announcement-icon {
   color: var(--blue);
@@ -924,6 +932,20 @@ legend {
   }
   .auth-card {
     padding: 26px 20px;
+  }
+  .notification-announcements {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: min(390px, calc(100vw - 24px));
+    max-height: 45vh;
+  }
+  .notification-announcement {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .notification-announcement-message {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 @media print {

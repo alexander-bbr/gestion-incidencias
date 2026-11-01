@@ -76,21 +76,21 @@ $signedInUser = current_user();
             <?php foreach (take_flashes() as $message): ?>
                 <div class="alert alert-<?= e($message['type']) ?>" role="status"><?= e($message['message']) ?></div>
             <?php endforeach; ?>
-            <?php if ($visibleNotifications): ?>
-                <section class="notification-announcements" aria-label="Notificaciones nuevas" aria-live="polite">
-                    <?php foreach ($visibleNotifications as $notification): ?>
-                        <form method="post" action="<?= e(url('notification-open', ['id' => $notification['id_notificacion']])) ?>" class="notification-announcement">
-                            <?= csrf_field() ?>
-                            <span class="notification-announcement-icon" aria-hidden="true">●</span>
-                            <span class="notification-announcement-message"><?= e($notification['mensaje']) ?></span>
-                            <button type="submit">Ver incidencia</button>
-                        </form>
-                    <?php endforeach; ?>
-                </section>
-            <?php endif; ?>
             <?php require $viewPath; ?>
         </main>
     </div>
+    <?php if ($visibleNotifications): ?>
+        <section class="notification-announcements" aria-label="Notificaciones nuevas" aria-live="polite">
+            <?php foreach ($visibleNotifications as $notification): ?>
+                <form method="post" action="<?= e(url('notification-open', ['id' => $notification['id_notificacion']])) ?>" class="notification-announcement">
+                    <?= csrf_field() ?>
+                    <span class="notification-announcement-icon" aria-hidden="true">●</span>
+                    <span class="notification-announcement-message"><?= e($notification['mensaje']) ?></span>
+                    <button type="submit">Ver incidencia</button>
+                </form>
+            <?php endforeach; ?>
+        </section>
+    <?php endif; ?>
 <?php else: ?>
     <main class="auth-shell">
         <?php foreach (take_flashes() as $message): ?>
