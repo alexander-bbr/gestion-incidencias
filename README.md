@@ -6,23 +6,26 @@ Aplicación administrativa para el registro y control de las incidencias relacio
 
 1. Inicia Apache y MySQL desde el panel de XAMPP.
 
-2. Copia `config/local.example.php` como `config/local.php` si la conexión difiere de los valores locales predeterminados. Ajusta allí host, puerto, nombre de la base, usuario y contraseña. También se aceptan `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` como variables de entorno.
+2. Cambia el nombre del archivo `config/local.example.php` por `config/local.php`. Abre el archivo y ajusta allí host, puerto, nombre de la base, usuario y contraseña. También se aceptan `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` como variables de entorno.
 
-3. Abre `http://localhost:8080/gestion-incidencias/`. La primera visita presenta el formulario para crear el primer administrador; utiliza una contraseña de al menos 12 caracteres. Después de crear esa cuenta, el formulario de configuración queda bloqueado.
+3. Guarda el proyecto en el directorio de `htdocs`.
 
-4. Para subir archivos, PHP debe tener habilitadas las extensiones `fileinfo` y `pdo_mysql`; Apache debe permitir `.htaccess`. Los adjuntos se guardan bajo `storage/uploads` y se descargan únicamente tras comprobar permisos.
+4. Coloca en el navegador `http://localhost/gestion-incidencias/`.
+
+5. En caso de no existir un usuario administrador, la primera visita presentará el formulario para crearlo. Después de crear esa cuenta, el formulario de creación queda bloqueado.
 
 ## Módulos
 
 - Inicio de sesión:
   - Inicio de sesión con correo y contraseña, además de un sistema de restablecimiento de contraseñas por parte del usuario `Administrador`.
-- Notificaciones:
+
+- Sistema de Notificaciones:
   - Campana en el encabezado con contador de notificaciones pendientes, listado reciente y opción para marcar todas como leídas.
-  - Avisos visibles en pantalla al asignar incidencias a técnicos o cambiar el estado; cada aviso permite abrir la incidencia.
+  - Avisos visibles en pantalla donde cada uno permite abrir la incidencia.
 
 - Incidencias:
   - Listado de incidencias con buscador, filtros combinables y paginación de 15 elementos.
-  - Creación de Incidencias con posibilidad de adjuntar hasta 5 archivos (5 MB por archivo).
+  - Creación de Incidencias con posibilidad de adjuntar hasta 5 archivos (5 MB por archivo). Los archivos se guardan en `storage/uploads`.
 
 - Reportes y Métricas:
   - Filtro por periodo de creación.
@@ -30,19 +33,22 @@ Aplicación administrativa para el registro y control de las incidencias relacio
   - Posibilidad de descarga de los gráficos en formato PDF, y de los registros en formato Excel.
 
 - Gestión de Usuarios:
+  - Panel para registrar y editar los usuarios que acceden a la aplicación.
 
 ## Permisología
 
 ### Módulo de Incidencias
 
 - Administrador:
-  - Puede ver y gestionar todas las incidencias
+  - Puede ver y gestionar todas las incidencias.
+  - Puede cambiar el estado de una incidencia (ABIERTA, EN PROGRESO, RESUELTA, CERRADA y RECHAZADA).
 
 - Técnico:
-  - Puede ver y gestionar las incidencias que tenga asignado
+  - Puede ver y gestionar las incidencias que tenga asignado.
+  - Puede cambiar el estado de una incidencia (RESUELTA y RECHAZADA)
 
 - Usuario:
-  - Puede ver, editar y asignar un técnico a sus propias incidencias
+  - Puede ver y editar sus propias incidencias
 
 ### Módulo de Reportes e Incidencias
 
@@ -51,3 +57,9 @@ Solo disponible para el usuario `Administrador`.
 ### Módulo de Gestión de Usuarios
 
 Solo disponible para el usuario `Administrador`.
+
+### Sistema de Notificaciones
+
+- Se notifica al `Técnico` cuando se le asigna una incidencia.
+- Se notifica al `Usuario` cuando el estado de su incidencia cambia.
+- Se notifica al `Administrador` cuando el estado de cualquier incidencia cambia.
