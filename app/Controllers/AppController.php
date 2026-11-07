@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\Database;
+use App\Models\Comment;
 use App\Models\Incident;
 use App\Models\Notification;
 use App\Models\Report;
@@ -63,6 +64,9 @@ final class AppController
                 break;
             case 'incident-edit':
                 $this->incidentEdit();
+                break;
+            case 'incident-comment':
+                $this->incidentComment();
                 break;
             case 'incident-delete':
                 $this->incidentDelete();
@@ -278,15 +282,60 @@ final class AppController
             'title' => $incident['codigo'],
             'incident' => $incident,
             'attachments' => $this->incidents->attachments($id),
+            'comments' => (new Comment($this->db))->forIncident(
+                $id,
+                $user['role'] === User::ROLE_TECHNICIAN
+            ),
             'catalogs' => $this->incidents->catalogs(),
             'technicians' => in_array($user['role'], [User::ROLE_USER, User::ROLE_ADMIN], true)
                 ? $this->users->technicians()
                 : [],
             'canManage' => is_admin(),
             'technicianCanUpdate' => $technicianCanUpdate,
+            'canComment' => in_array($user['role'], [User::ROLE_USER, User::ROLE_TECHNICIAN, User::ROLE_ADMIN], true),
+            'canCommentInternally' => $user['role'] === User::ROLE_TECHNICIAN,
             'reporterCanEdit' => $user['role'] === User::ROLE_USER
                 && (int) $incident['id_reportante'] === (int) $user['id_usuario'],
         ]);
+    }
+
+    private function incidentComment(): void
+    {
+        $user = require_login();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        verify_csrf();
+
+        $id = $this->routeId();
+        $incident = $this->incidents->find($id);
+        if (!$incident || !$this->canViewIncident($user, $incident)) {
+            http_response_code(404);
+            render('not-found', ['title' => 'Incidencia no encontrada']);
+            return;
+        }
+
+        $text = trim((string) ($_POST['texto'] ?? ''));
+        if ($text === '' || mb_strlen($text) > 5000) {
+            flash('error', 'El comentario es obligatorio y no puede superar 5.000 caracteres.');
+            redirect('incident-view', ['id' => $id]);
+        }
+
+        $internal = ($_POST['es_interno'] ?? '') === '1';
+        if ($internal && $user['role'] !== User::ROLE_TECHNICIAN) {
+            http_response_code(403);
+            exit('Solo un técnico asignado puede agregar comentarios internos.');
+        }
+
+        (new Comment($this->db))->create(
+            $id,
+            (int) $user['id_usuario'],
+            $text,
+            $internal
+        );
+        flash('success', $internal ? 'Nota interna agregada.' : 'Comentario agregado.');
+        redirect('incident-view', ['id' => $id]);
     }
 
     private function incidentEdit(): void

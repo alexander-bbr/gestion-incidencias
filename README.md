@@ -28,6 +28,7 @@ Aplicación administrativa para el registro y control de las incidencias relacio
 3. Incidencias
    - Listado de incidencias con buscador, filtros combinables y paginación de 15 elementos.
    - Creación de Incidencias con posibilidad de adjuntar hasta 5 archivos (5 MB por archivo). Los archivos se guardan en `storage/uploads`.
+   - Comentarios públicos para participantes de la incidencia y notas internas visibles únicamente para técnicos.
 
 4. Reportes y Métricas
    - Filtrado por periodo de creación.

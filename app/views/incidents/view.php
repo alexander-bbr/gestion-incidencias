@@ -6,6 +6,39 @@
         <?php if ($reporterCanEdit): ?><p class="form-actions"><a class="button button-primary button-edit" href="<?= e(url('incident-edit', ['id' => $incident['id_incidencia']])) ?>">Editar</a></p><?php endif; ?>
         <h3>Descripción</h3><div class="prose"><?= nl2br(e($incident['descripcion'])) ?></div>
         <?php if (!empty($incident['solucion'])): ?><h3>Solución</h3><div class="prose"><?= nl2br(e($incident['solucion'])) ?></div><?php endif; ?>
+        <section class="incident-comments" aria-labelledby="comments-heading">
+            <div class="comments-heading">
+                <div><h3 id="comments-heading">Comentarios</h3></div>
+            </div>
+            <?php if (!$comments): ?>
+                <p class="comments-empty">Aún no hay comentarios.</p>
+            <?php else: ?>
+                <ol class="comment-list">
+                    <?php foreach ($comments as $comment): ?>
+                        <li class="comment-item <?= (bool) $comment['es_interno'] ? 'comment-internal' : '' ?>">
+                            <div class="comment-meta">
+                                <span class="comment-author"><?= e($comment['nombre'] . ' ' . $comment['apellido']) ?></span>
+                                <span class="comment-role"><?= e(ucfirst(strtolower($comment['role']))) ?></span>
+                                <?php if ((bool) $comment['es_interno']): ?><span class="comment-visibility">Nota interna · solo técnicos</span><?php endif; ?>
+                                <time datetime="<?= e(date(DATE_ATOM, strtotime($comment['fecha']))) ?>"><?= e(date('d/m/Y H:i', strtotime($comment['fecha']))) ?></time>
+                            </div>
+                            <div class="comment-text"><?= nl2br(e($comment['texto'])) ?></div>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            <?php endif; ?>
+            <?php if ($canComment): ?>
+                <form method="post" action="<?= e(url('incident-comment', ['id' => $incident['id_incidencia']])) ?>" class="comment-form">
+                    <?= csrf_field() ?>
+                    <label for="comment-text">Agregar comentario</label>
+                    <textarea id="comment-text" name="texto" rows="4" maxlength="5000" placeholder="Escribe un comentario..." required></textarea>
+                    <?php if ($canCommentInternally): ?>
+                        <label class="comment-internal-toggle"><input type="checkbox" name="es_interno" value="1"><span>Nota interna, visible solo para técnicos</span></label>
+                    <?php endif; ?>
+                    <div class="comment-form-footer"><small>Máximo 5.000 caracteres.</small><button class="button button-primary" type="submit">Publicar comentario</button></div>
+                </form>
+            <?php endif; ?>
+        </section>
         <h3>Archivos adjuntos</h3>
         <?php if (!$attachments): ?><p class="muted">No hay archivos adjuntos.</p><?php else: ?><ul class="attachment-list"><?php foreach ($attachments as $file): ?><li><a href="<?= e(url('attachment', ['id' => $file['id_adjunto']])) ?>"><?= e($file['nombre_archivo']) ?></a><small><?= number_format((int) $file['tamano_bytes'] / 1024, 0) ?> KB</small></li><?php endforeach; ?></ul><?php endif; ?>
         <a class="button button-secondary button-go-back" href="<?= e(url('incidents')) ?>">← Volver a Incidencias</a>
