@@ -465,8 +465,8 @@ tr {
 table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
   font-size: 13px;
+  text-align: center;
 }
 th {
   text-align: center;
@@ -639,6 +639,32 @@ textarea {
   color: var(--muted);
   text-align: center;
   font-size: 13px;
+}
+.audit-table {
+  min-width: 850px;
+}
+.audit-table td {
+  vertical-align: top;
+}
+.audit-table td:first-child {
+  white-space: nowrap;
+}
+.audit-details summary {
+  color: var(--blue);
+  cursor: pointer;
+  font-weight: 600;
+}
+.audit-values {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+  padding-top: 9px;
+  color: var(--ink);
+  font-size: 11px;
+}
+.audit-values p {
+  margin-top: 3px;
+  line-height: 1.6;
 }
 .narrow-panel {
   max-width: 790px;

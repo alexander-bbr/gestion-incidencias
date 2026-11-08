@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\Database;
 use App\Models\Comment;
+use App\Models\Audit;
 use App\Models\Incident;
 use App\Models\Notification;
 use App\Models\Report;
@@ -89,6 +90,9 @@ final class AppController
             case 'reports-export':
                 $this->reportsExport();
                 break;
+            case 'audit':
+                $this->audit();
+                break;
             case 'notification-open':
                 $this->notificationOpen();
                 break;
@@ -170,6 +174,16 @@ final class AppController
     private function logout(): void
     {
         verify_csrf();
+        $user = current_user();
+        if ($user !== null) {
+            (new Audit($this->db))->record(
+                (int) $user['id_usuario'],
+                'LOGOUT',
+                'autenticacion',
+                (string) $user['id_usuario'],
+                'Cierre de sesión'
+            );
+        }
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
@@ -332,7 +346,8 @@ final class AppController
             $id,
             (int) $user['id_usuario'],
             $text,
-            $internal
+            $internal,
+            $incident['codigo']
         );
         flash('success', $internal ? 'Nota interna agregada.' : 'Comentario agregado.');
         redirect('incident-view', ['id' => $id]);
@@ -443,11 +458,11 @@ final class AppController
 
     private function incidentDelete(): void
     {
-        require_role(User::ROLE_ADMIN);
+        $user = require_role(User::ROLE_ADMIN);
         verify_csrf();
         $id = $this->routeId();
         $attachments = $this->incidents->attachments($id);
-        $this->incidents->delete($id);
+        $this->incidents->delete($id, (int) $user['id_usuario']);
         foreach ($attachments as $attachment) {
             $path = ROOT_PATH . '/storage/uploads/' . basename((string) $attachment['ruta']);
             if (is_file($path) && !unlink($path)) {
@@ -575,6 +590,17 @@ final class AppController
             flash('success', $active ? 'La cuenta fue activada si era elegible.' : 'La cuenta fue desactivada si era elegible.');
         }
         redirect('users');
+    }
+
+    private function audit(): void
+    {
+        require_role(User::ROLE_ADMIN);
+        $page = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT);
+        $result = (new Audit($this->db))->page($page !== false ? $page : 1);
+        render('audit/index', [
+            'title' => 'Auditoría',
+            'result' => $result,
+        ]);
     }
 
     private function reports(): void

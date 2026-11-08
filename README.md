@@ -38,6 +38,11 @@ Aplicación administrativa para el registro y control de las incidencias relacio
 5. Gestión de Usuarios
    - Panel para registrar y editar los usuarios que acceden a la aplicación.
 
+6. Auditoría
+   - Módulo de solo lectura disponible únicamente para el Administrador, con hasta 50 movimientos por página.
+   - Registra la actividad de incidencias, comentarios, usuarios e inicios/cierres de sesión.
+   - Conserva actor, fecha y entidad aunque una incidencia sea eliminada; no guarda contraseñas ni el contenido de comentarios, descripciones o soluciones.
+
 ## Permisología
 
 1. Módulo de Incidencias

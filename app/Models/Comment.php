@@ -28,17 +28,35 @@ final class Comment
         return $statement->fetchAll();
     }
 
-    public function create(int $incidentId, int $userId, string $text, bool $internal): void
+    public function create(int $incidentId, int $userId, string $text, bool $internal, string $incidentCode): void
     {
-        $statement = $this->db->prepare(
-            'INSERT INTO comentario (id_incidencia, id_usuario, texto, es_interno)
-             VALUES (:incident, :user, :text, :internal)'
-        );
-        $statement->execute([
-            'incident' => $incidentId,
-            'user' => $userId,
-            'text' => $text,
-            'internal' => $internal ? 1 : 0,
-        ]);
+        $this->db->beginTransaction();
+        try {
+            $statement = $this->db->prepare(
+                'INSERT INTO comentario (id_incidencia, id_usuario, texto, es_interno)
+                 VALUES (:incident, :user, :text, :internal)'
+            );
+            $statement->execute([
+                'incident' => $incidentId,
+                'user' => $userId,
+                'text' => $text,
+                'internal' => $internal ? 1 : 0,
+            ]);
+            (new Audit($this->db))->record(
+                $userId,
+                $internal ? 'COMMENT_INTERNAL' : 'COMMENT_PUBLIC',
+                'incidencia',
+                (string) $incidentId,
+                $incidentCode,
+                null,
+                ['visibilidad' => $internal ? 'Nota interna' : 'Público']
+            );
+            $this->db->commit();
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $exception;
+        }
     }
 }

@@ -154,7 +154,7 @@ CREATE TABLE adjunto (
 );
 
 -- =====================================================
--- 6. HISTORIAL / AUDITORÍA
+-- 6. HISTORIAL DE INCIDENCIAS
 -- =====================================================
 
 CREATE TABLE historial_incidencia (
@@ -174,6 +174,23 @@ CREATE TABLE historial_incidencia (
 );
 
 CREATE INDEX idx_hist_incidencia ON historial_incidencia(id_incidencia);
+
+CREATE TABLE auditoria (
+    id_auditoria        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    actor_id            INT,
+    actor_name          VARCHAR(201) NOT NULL,
+    actor_role          VARCHAR(30),
+    accion              VARCHAR(60) NOT NULL,
+    entidad_tipo        VARCHAR(40) NOT NULL,
+    entidad_id          VARCHAR(64),
+    entidad_nombre      VARCHAR(255) NOT NULL,
+    valores_anteriores LONGTEXT,
+    valores_nuevos      LONGTEXT,
+    fecha               DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_auditoria_fecha (fecha, id_auditoria),
+    INDEX idx_auditoria_actor (actor_id),
+    INDEX idx_auditoria_accion (accion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
 -- 7. NOTIFICACIONES

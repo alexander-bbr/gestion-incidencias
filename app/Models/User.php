@@ -35,12 +35,26 @@ final class User
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
         if (!$user || !password_verify($password, $user['password_hash'])) {
+            (new Audit($this->db))->record(
+                null,
+                'LOGIN_FAILED',
+                'autenticacion',
+                null,
+                'Inicio de sesión'
+            );
             return null;
         }
 
         $update = $this->db->prepare('UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = :id');
         $update->execute(['id' => $user['id_usuario']]);
         unset($user['password_hash']);
+        (new Audit($this->db))->record(
+            (int) $user['id_usuario'],
+            'LOGIN_SUCCESS',
+            'autenticacion',
+            (string) $user['id_usuario'],
+            'Inicio de sesión'
+        );
         return $user;
     }
 
@@ -104,6 +118,16 @@ final class User
                     'password_hash' => password_hash($values['password'], PASSWORD_DEFAULT),
                     'id_rol' => $roleId,
                 ]);
+                $userId = (int) $this->db->lastInsertId();
+                (new Audit($this->db))->record(
+                    $userId,
+                    'USER_CREATED',
+                    'usuario',
+                    (string) $userId,
+                    $values['nombre'] . ' ' . $values['apellido'],
+                    null,
+                    ['Rol' => self::ROLE_ADMIN]
+                );
                 $this->db->commit();
             } catch (\Throwable $exception) {
                 if ($this->db->inTransaction()) {
@@ -118,6 +142,10 @@ final class User
 
     public function save(array $values, ?int $id = null): void
     {
+        $before = $id === null ? null : $this->find($id);
+        if ($id !== null && $before === null) {
+            throw new \DomainException('El usuario ya no existe.');
+        }
         $parameters = [
             'nombre' => $values['nombre'],
             'apellido' => $values['apellido'],
@@ -126,38 +154,84 @@ final class User
             'id_rol' => $values['id_rol'],
             'id_departamento' => $values['id_departamento'] ?: null,
         ];
-        if ($id === null) {
-            $parameters['password_hash'] = password_hash($values['password'], PASSWORD_DEFAULT);
-            $statement = $this->db->prepare(
-                'INSERT INTO usuario (nombre, apellido, email, telefono, id_rol, id_departamento, password_hash)
-                 VALUES (:nombre, :apellido, :email, :telefono, :id_rol, :id_departamento, :password_hash)'
-            );
-        } else {
-            $parameters['id'] = $id;
-            if ($values['password'] !== '') {
+        $this->db->beginTransaction();
+        try {
+            if ($id === null) {
                 $parameters['password_hash'] = password_hash($values['password'], PASSWORD_DEFAULT);
                 $statement = $this->db->prepare(
-                    'UPDATE usuario SET nombre = :nombre, apellido = :apellido, email = :email,
-                     telefono = :telefono, id_rol = :id_rol, id_departamento = :id_departamento,
-                     password_hash = :password_hash WHERE id_usuario = :id'
+                    'INSERT INTO usuario (nombre, apellido, email, telefono, id_rol, id_departamento, password_hash)
+                     VALUES (:nombre, :apellido, :email, :telefono, :id_rol, :id_departamento, :password_hash)'
                 );
             } else {
-                $statement = $this->db->prepare(
-                    'UPDATE usuario SET nombre = :nombre, apellido = :apellido, email = :email,
-                     telefono = :telefono, id_rol = :id_rol, id_departamento = :id_departamento
-                     WHERE id_usuario = :id'
-                );
+                $parameters['id'] = $id;
+                if ($values['password'] !== '') {
+                    $parameters['password_hash'] = password_hash($values['password'], PASSWORD_DEFAULT);
+                    $statement = $this->db->prepare(
+                        'UPDATE usuario SET nombre = :nombre, apellido = :apellido, email = :email,
+                         telefono = :telefono, id_rol = :id_rol, id_departamento = :id_departamento,
+                         password_hash = :password_hash WHERE id_usuario = :id'
+                    );
+                } else {
+                    $statement = $this->db->prepare(
+                        'UPDATE usuario SET nombre = :nombre, apellido = :apellido, email = :email,
+                         telefono = :telefono, id_rol = :id_rol, id_departamento = :id_departamento
+                         WHERE id_usuario = :id'
+                    );
+                }
             }
+            $statement->execute($parameters);
+            $userId = $id ?? (int) $this->db->lastInsertId();
+            $after = $this->find($userId);
+            if ($after === null) {
+                throw new \RuntimeException('No se pudo recuperar el usuario guardado para auditoría.');
+            }
+            $beforeValues = $before === null ? null : $this->auditSnapshot($before);
+            $afterValues = $this->auditSnapshot($after);
+            $sensitiveChanges = [];
+            if ($before === null || $before['email'] !== $values['email']) {
+                $sensitiveChanges[] = 'Correo electrónico (valor omitido)';
+            }
+            if ($before === null || $before['telefono'] !== ($values['telefono'] ?: null)) {
+                if (($values['telefono'] ?? '') !== '' || ($before['telefono'] ?? null) !== null) {
+                    $sensitiveChanges[] = 'Teléfono (valor omitido)';
+                }
+            }
+            if ($values['password'] !== '') {
+                $sensitiveChanges[] = 'Contraseña (valor omitido)';
+            }
+            if ($sensitiveChanges) {
+                $afterValues['Campos sensibles modificados (valores omitidos)'] = $sensitiveChanges;
+                if ($beforeValues !== null) {
+                    $beforeValues['Campos sensibles modificados (valores omitidos)'] = $sensitiveChanges;
+                }
+            }
+            $actor = current_user();
+            (new Audit($this->db))->record(
+                $actor !== null ? (int) $actor['id_usuario'] : null,
+                $id === null ? 'USER_CREATED' : 'USER_UPDATED',
+                'usuario',
+                (string) $userId,
+                $after['nombre'] . ' ' . $after['apellido'],
+                $beforeValues,
+                $afterValues
+            );
+            $this->db->commit();
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $exception;
         }
-        $statement->execute($parameters);
     }
 
     public function find(int $id): ?array
     {
         $statement = $this->db->prepare(
             'SELECT u.id_usuario, u.nombre, u.apellido, u.email, u.telefono, u.id_rol,
-                    u.id_departamento, u.activo, r.nombre AS role
-             FROM usuario u JOIN rol r ON r.id_rol = u.id_rol WHERE u.id_usuario = :id'
+                    u.id_departamento, u.activo, r.nombre AS role, d.nombre AS department
+             FROM usuario u JOIN rol r ON r.id_rol = u.id_rol
+             LEFT JOIN departamento d ON d.id_departamento = u.id_departamento
+             WHERE u.id_usuario = :id'
         );
         $statement->execute(['id' => $id]);
         $user = $statement->fetch();
@@ -166,16 +240,53 @@ final class User
 
     public function setActive(int $id, bool $active): void
     {
-        $statement = $this->db->prepare(
-            "UPDATE usuario SET activo = :active WHERE id_usuario = :id
-             AND id_usuario <> :current_id
-             AND id_rol <> (SELECT id_rol FROM rol WHERE nombre = 'ADMINISTRADOR')"
-        );
-        $statement->execute([
-            'active' => $active ? 1 : 0,
-            'id' => $id,
-            'current_id' => current_user()['id_usuario'],
-        ]);
+        $before = $this->find($id);
+        if ($before === null || (bool) $before['activo'] === $active) {
+            return;
+        }
+        $this->db->beginTransaction();
+        try {
+            $statement = $this->db->prepare(
+                "UPDATE usuario SET activo = :active WHERE id_usuario = :id
+                 AND id_usuario <> :current_id
+                 AND id_rol <> (SELECT id_rol FROM rol WHERE nombre = 'ADMINISTRADOR')"
+            );
+            $statement->execute([
+                'active' => $active ? 1 : 0,
+                'id' => $id,
+                'current_id' => current_user()['id_usuario'],
+            ]);
+            if ($statement->rowCount() > 0) {
+                $after = $this->find($id);
+                if ($after !== null) {
+                    (new Audit($this->db))->record(
+                        (int) current_user()['id_usuario'],
+                        $active ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
+                        'usuario',
+                        (string) $id,
+                        $after['nombre'] . ' ' . $after['apellido'],
+                        $this->auditSnapshot($before),
+                        $this->auditSnapshot($after)
+                    );
+                }
+            }
+            $this->db->commit();
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    private function auditSnapshot(array $user): array
+    {
+        return [
+            'Nombre' => $user['nombre'] . ' ' . $user['apellido'],
+            'Rol' => $user['role'],
+            'Departamento' => $user['department'] ?: 'Sin departamento',
+            'Estado de cuenta' => (bool) $user['activo'] ? 'Activo' : 'Inactivo',
+        ];
     }
 
     private function roleId(string $name): int

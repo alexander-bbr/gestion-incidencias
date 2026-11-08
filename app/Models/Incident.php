@@ -148,6 +148,21 @@ final class Incident
                 $this->history($id, $userId, 'ASIGNACION', null, (string) $values['id_tecnico']);
                 $this->notifyTechnician((int) $values['id_tecnico'], $id, $code, $values['titulo']);
             }
+            $created = $this->find($id);
+            if ($created === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia recién creada para auditoría.');
+            }
+            (new Audit($this->db))->record(
+                $userId,
+                'INCIDENT_CREATED',
+                'incidencia',
+                (string) $id,
+                $code,
+                null,
+                $this->auditSnapshot($created) + [
+                    'Contenido textual omitido' => ['Título', 'Descripción'],
+                ]
+            );
             $this->db->commit();
             return $id;
         } catch (\Throwable $exception) {
@@ -171,6 +186,10 @@ final class Incident
             if (!$incident) {
                 $this->db->rollBack();
                 return false;
+            }
+            $beforeIncident = $this->find($id);
+            if ($beforeIncident === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia para auditoría.');
             }
             $oldTechnician = $incident['id_tecnico'];
 
@@ -219,6 +238,32 @@ final class Incident
                 }
             }
             $this->history($id, $reporterId, 'EDICION_REPORTANTE', null, 'Datos de incidencia actualizados');
+            $updatedIncident = $this->find($id);
+            if ($updatedIncident === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia actualizada para auditoría.');
+            }
+            $beforeValues = $this->auditSnapshot($beforeIncident);
+            $afterValues = $this->auditSnapshot($updatedIncident);
+            $textChanges = [];
+            if ($beforeIncident['titulo'] !== $values['titulo']) {
+                $textChanges[] = 'Título (contenido omitido)';
+            }
+            if ($beforeIncident['descripcion'] !== $values['descripcion']) {
+                $textChanges[] = 'Descripción (contenido omitido)';
+            }
+            if ($textChanges) {
+                $beforeValues['Campos de texto modificados (valores omitidos)'] = $textChanges;
+                $afterValues['Campos de texto modificados (valores omitidos)'] = $textChanges;
+            }
+            (new Audit($this->db))->record(
+                $reporterId,
+                'INCIDENT_UPDATED',
+                'incidencia',
+                (string) $id,
+                $incident['codigo'],
+                $beforeValues,
+                $afterValues
+            );
             $this->db->commit();
             return true;
         } catch (\Throwable $exception) {
@@ -288,6 +333,35 @@ final class Incident
                     );
                 }
             }
+            $updated = $this->find($id);
+            if ($updated === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia actualizada para auditoría.');
+            }
+            $beforeValues = $this->auditSnapshot($old);
+            $afterValues = $this->auditSnapshot($updated);
+            $textChanges = [];
+            if ($old['titulo'] !== $values['titulo']) {
+                $textChanges[] = 'Título (contenido omitido)';
+            }
+            if ($old['descripcion'] !== $values['descripcion']) {
+                $textChanges[] = 'Descripción (contenido omitido)';
+            }
+            if ($old['solucion'] !== ($values['solucion'] ?: null)) {
+                $textChanges[] = 'Solución (contenido omitido)';
+            }
+            if ($textChanges) {
+                $beforeValues['Campos de texto modificados (valores omitidos)'] = $textChanges;
+                $afterValues['Campos de texto modificados (valores omitidos)'] = $textChanges;
+            }
+            (new Audit($this->db))->record(
+                $actorId,
+                'INCIDENT_UPDATED',
+                'incidencia',
+                (string) $id,
+                $old['codigo'],
+                $beforeValues,
+                $afterValues
+            );
             $this->db->commit();
         } catch (\Throwable $exception) {
             if ($this->db->inTransaction()) {
@@ -311,6 +385,10 @@ final class Incident
             if (!$incident) {
                 $this->db->rollBack();
                 return false;
+            }
+            $beforeIncident = $this->find($id);
+            if ($beforeIncident === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia para auditoría.');
             }
             $oldStatus = $incident['nombre'];
             $statement = $this->db->prepare(
@@ -337,6 +415,25 @@ final class Incident
                     $statusName
                 );
             }
+            $updated = $this->find($id);
+            if ($updated === null) {
+                throw new \RuntimeException('No se pudo recuperar la incidencia actualizada para auditoría.');
+            }
+            $beforeValues = $this->auditSnapshot($beforeIncident);
+            $afterValues = $this->auditSnapshot($updated);
+            if ($beforeIncident['solucion'] !== ($solution !== '' ? $solution : null)) {
+                $beforeValues['Campos de texto modificados (valores omitidos)'] = ['Solución'];
+                $afterValues['Campos de texto modificados (valores omitidos)'] = ['Solución'];
+            }
+            (new Audit($this->db))->record(
+                $technicianId,
+                'INCIDENT_UPDATED',
+                'incidencia',
+                (string) $id,
+                $incident['codigo'],
+                $beforeValues,
+                $afterValues
+            );
             $this->db->commit();
             return true;
         } catch (\Throwable $exception) {
@@ -347,10 +444,32 @@ final class Incident
         }
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $actorId): void
     {
-        $statement = $this->db->prepare('DELETE FROM incidencia WHERE id_incidencia = :id');
-        $statement->execute(['id' => $id]);
+        $this->db->beginTransaction();
+        try {
+            $incident = $this->find($id);
+            if ($incident === null) {
+                throw new \DomainException('La incidencia ya no existe.');
+            }
+            (new Audit($this->db))->record(
+                $actorId,
+                'INCIDENT_DELETED',
+                'incidencia',
+                (string) $id,
+                $incident['codigo'],
+                $this->auditSnapshot($incident),
+                null
+            );
+            $statement = $this->db->prepare('DELETE FROM incidencia WHERE id_incidencia = :id');
+            $statement->execute(['id' => $id]);
+            $this->db->commit();
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $exception;
+        }
     }
 
     public function homeCounts(array $user): array
@@ -452,6 +571,16 @@ final class Incident
             'before' => $before,
             'after' => $after,
         ]);
+    }
+
+    private function auditSnapshot(array $incident): array
+    {
+        return [
+            'Estado' => str_replace('_', ' ', $incident['status']),
+            'Prioridad' => $incident['priority'],
+            'Categoría' => $incident['category'],
+            'Técnico asignado' => $incident['technician'] ?: 'Sin asignar',
+        ];
     }
 
     private function notifyTechnician(int $technicianId, int $incidentId, string $code, string $title): void

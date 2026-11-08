@@ -69,6 +69,7 @@ $signedInUser = current_user();
             <?php if ($signedInUser['role'] === 'ADMINISTRADOR'): ?>
                 <a class="nav-link" href="<?= e(url('users')) ?>">Gestión de Usuarios</a>
                 <a class="nav-link" href="<?= e(url('reports')) ?>">Reportes y Métricas</a>
+                <a class="nav-link" href="<?= e(url('audit')) ?>">Auditoría</a>
             <?php endif; ?>
         </aside>
         <main class="main-content">
